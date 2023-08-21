@@ -1,0 +1,59 @@
+provider "azurerm" {
+  features {}
+}
+
+resource "azurerm_monitor_log_profile" "example" {
+  name                = "examplelogprofile"
+  storage_account_id = azurerm_storage_account.example.id
+}
+
+resource "azurerm_monitor_metric_alert" "example" {
+  name                = "examplemetricalert"
+  resource_id         = azurerm_virtual_machine.example.id
+  scopes              = [azurerm_virtual_machine.example.id]
+  description         = "Example metric alert"
+  enabled             = true
+  evaluation_frequency = "PT1M"
+  criteria {
+    metric_namespace = "Microsoft.Compute/virtualMachines"
+    metric_name      = "Percentage CPU"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 90
+  }
+  action {
+    action_group_id = azurerm_monitor_action_group.example.id
+  }
+}
+
+resource "azurerm_virtual_machine" "example" {
+  name                  = "examplevm"
+  location              = azurerm_resource_group.example.location
+  resource_group_name   = azurerm_resource_group.example.name
+  network_interface_ids = [azurerm_network_interface.example.id]
+  vm_size               = "Standard_DS1_v2"
+
+  os_profile {
+    computer_name  = "examplevm"
+    admin_username = "adminuser"
+    admin_password = "Password1234!"
+  }
+
+  storage_os_disk {
+    name              = "osdisk"
+    caching           = "ReadWrite"
+    create_option    = "FromImage"
+  }
+
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "16.04-LTS"
+    version   = "latest"
+  }
+
+  tags = {
+    environment = "testing"
+  }
+}
+
